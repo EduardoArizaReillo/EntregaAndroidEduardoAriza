@@ -1,6 +1,9 @@
 package com.example.entregaandroideduardoariza;
 
 import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -11,13 +14,18 @@ import android.widget.RadioGroup;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
+    SQLiteDatabase db;
+    ConexionSQLiteHelper helper;
     MediaPlayer mediaPlayer;
     int pos_reproduccion;
+    String nameTag;
+    String dificultades;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        helper= new ConexionSQLiteHelper(this);
+        db=helper.getWritableDatabase();
         //Inicializamos el array con cada casilla del tablero
         CASILLAS= new int[9];
         CASILLAS[0]=R.id.a1;
@@ -30,8 +38,22 @@ public class MainActivity extends Activity {
         CASILLAS[7]=R.id.c2;
         CASILLAS[8]=R.id.c3;
 
-    }
+        //Nombre de usuario
+        Intent intent = getIntent();
+        nameTag = intent.getStringExtra("nombreUser");
+        Toast.makeText(this,nameTag,Toast.LENGTH_LONG);
 
+    }
+    private void insertarDatosPartidas(String player1, String player2, String dificultad, String resultado) {
+
+        ContentValues values = new ContentValues();
+        values.put("jugador1", player1);
+        values.put("jugador2", player2);
+        values.put("dificultad", dificultad);
+        values.put("resultado", resultado);
+        db.insert("datosPartidas", null, values);
+
+    }
     public void Jugar(View v){
 
         //reseteamos el tablero
@@ -57,11 +79,13 @@ public class MainActivity extends Activity {
         int id=configDificultad.getCheckedRadioButtonId();
 
         int dificultad=0;
-
+        dificultades="Facil";
         if(id==R.id.normal){
             dificultad=1;
+            dificultades="Dificil";
         }else if(id==R.id.imposible){
             dificultad=2;
+            dificultades="Muy Dificil";
         }
 
         partida=new Partida(dificultad);
@@ -72,14 +96,16 @@ public class MainActivity extends Activity {
         ((RadioGroup)findViewById(R.id.grupoDificultad)).setAlpha(0);
 
     }
-    private void play(){
-        if (mediaPlayer==null){
-            mediaPlayer= MediaPlayer.create(this,R.raw.deep);
+    public void sonar(View view) {
+
+        if (mediaPlayer == null) {
+
+            mediaPlayer = MediaPlayer.create(this, R.raw.sonidito);
         }
-        if(!mediaPlayer.isPlaying()){
+
+        if (!mediaPlayer.isPlaying()) {
 
             mediaPlayer.start();
-            pos_reproduccion=10000;
             mediaPlayer.seekTo(pos_reproduccion);
 
         }
@@ -87,7 +113,7 @@ public class MainActivity extends Activity {
 
     //creamos el método que se lanza al pulsar cada casilla
     public void toqueCasilla(View v){
-        play();
+        sonar(v);
         //hacemos que sólo se ejecute cuando la variable partida no sea null
         if(partida==null){
             return;
@@ -144,11 +170,21 @@ public class MainActivity extends Activity {
 
         String mensaje;
 
-        if(res==1) mensaje="Han ganado los círculos";
+        if(res==1) {
+            mensaje="Han ganado los círculos";
+            insertarDatosPartidas(nameTag,"Bot",dificultades,nameTag);
+        }
 
-        else if(res==2) mensaje="Han ganado las aspas";
 
-        else mensaje="Empate";
+        else if(res==2) {
+            insertarDatosPartidas(nameTag,"Bot",dificultades,"Bot");
+            mensaje="Han ganado las aspas";
+        }
+
+        else{
+            insertarDatosPartidas(nameTag,"Bot",dificultades,"Empate");
+            mensaje="Empate";
+        }
 
         Toast toast= Toast.makeText(this,mensaje,Toast.LENGTH_LONG);
         toast.setGravity(Gravity.CENTER,0,0);
@@ -184,4 +220,8 @@ public class MainActivity extends Activity {
 
     private Partida partida;
 
+    public void onPartida(View view) {
+        Intent i= new Intent(this,ListarPartidas.class);
+        startActivity(i);
+    }
 }

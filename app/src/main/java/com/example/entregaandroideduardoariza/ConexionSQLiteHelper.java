@@ -6,22 +6,27 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import androidx.annotation.Nullable;
 
-
-
 public class ConexionSQLiteHelper extends SQLiteOpenHelper {
-    final String CREAR_TABLA_USUARIO="CREATE TABLE usuarios(nombre TEXT)";
-    public ConexionSQLiteHelper(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
-        super(context, name, factory, version);
+    public static final int DATABASE_VERSION = 1;
+    public static final String DATABASE_NAME = "Players.db";
+
+    public ConexionSQLiteHelper(@Nullable Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-    db.execSQL(CREAR_TABLA_USUARIO);
+        db.execSQL(EstructureDDBB.SQL_CREATE_DATOS_PARTIDAS);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-    db.execSQL("DROP TABLE IF EXISTS usuarios");
-    onCreate(db);
+
+        db.execSQL(EstructureDDBB.SQL_CREATE_DATOS_PARTIDAS);
+        db.execSQL(EstructureDDBB.SQL_DELETE_DATOS_PARTIDAS);
     }
+    public ConexionSQLiteHelper(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
+        super(context, name, factory, version);
+    }
+
 }
